@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Backup - ticket-akumarugal</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #2b2d31;
+      color: #dcddde;
+      display: flex;
+      justify-content: center;
+    }
+
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-width: 900px;
+      width: 100%;
+      background: #2b2d31;
+      border-left: 1px solid #3e4147;
+      border-right: 1px solid #3e4147;
+    }
+
+    @media (max-width: 1024px) {
+      .chat-container {
+        max-width: 100%;
+        border-left: none;
+        border-right: none;
+        height: 100dvh;
+        padding: 0 8px;
+      }
+    }
+
+    .channel-header { background: #1e1f22; display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; border-bottom: 1px solid #3e4147; }
+    .channel-title { display: flex; align-items: center; gap: 8px; }
+    .channel-title h1 { font-size: 16px; margin: 0; color: #fff; }
+    .search-bar { background: #1e1f22; position: relative; display: flex; align-items: center; }
+    .search-bar input { 
+      width: 240px; padding: 8px 12px; border-radius: 4px; border: none; 
+      background: #313338; color: #fff; font-size: 14px;
+      placeholder-color: #87898c;
+      transition: background-color 0.2s ease;
+    }
+    .search-bar input:focus {
+      outline: none;
+      background: #40444b;
+    }
+    .search-bar input::placeholder {
+      color: #87898c;
+    }
+    .search-results {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background: #2f3136;
+      border: 1px solid #40444b;
+      border-radius: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+      display: none;
+      min-width: 300px;
+    }
+    .search-result-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #40444b;
+      font-size: 13px;
+      transition: background-color 0.15s ease;
+    }
+    .search-result-item:hover,
+    .search-result-item.active {
+      background: #40444b;
+    }
+    .search-result-item:last-child {
+      border-bottom: none;
+    }
+    .search-highlight {
+      background: rgba(255, 197, 0, 0.3) !important;
+      border-radius: 2px;
+      padding: 0 2px;
+    }
+
+    .messages { flex: 1; overflow-y: auto; padding: 16px; }
+    .message{display:flex;margin-bottom:16px;position:relative;transition: background-color 0.5s ease;}
+    .hidden { display: none !important; }
+    .avatar{width:40px;height:40px;border-radius:50%;margin-right:8px;cursor:pointer}
+    .username{font-weight:bold;color:#fff;cursor:pointer}
+    .timestamp{font-size:12px;color:#72767d;margin-left:6px}
+    .mention{background:rgba(88,101,242,.3);color:#7289da;padding:0 4px;border-radius:3px}
+
+    /* Formatação de texto markdown */
+    strong { font-weight: bold; color: #fff; }
+    em { font-style: italic; color: #fff; }
+    del { text-decoration: line-through; color: #72767d; }
+    u { text-decoration: underline; color: #fff; }
+    code { 
+      background: #2b2d31; 
+      padding: 2px 4px; 
+      border-radius: 3px; 
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: 0.9em;
+      color: #fff;
+    }
+
+    .welcome-message { text-align: center; margin: 20px 0; }
+    .welcome-message h3 { margin: 10px 0; color: #fff; }
+    .welcome-message p { color: #ccc; }
+    .divider { text-align: center; border-bottom: 1px solid #3e4147; margin: 20px 0; line-height: 0.1em; }
+    .divider span { background: #2b2d31; padding: 0 10px; color: #aaa; font-size: 12px; }
+
+    .buttons {margin-top: 8px;}
+    .btn {border:none;padding:6px 12px;border-radius:3px;cursor:pointer;font-weight:600;margin-right:4px;}
+    .btn.blue { background:#5865f2; color:#fff; }
+    .btn.red { background:#ed4245; color:#fff; }
+    .btn.green { background:#43b581; color:#fff; }
+    .btn.gray { background:#4f545c; color:#fff; }
+
+    .embed { border-left: 4px solid #5865f2; background:#2f3136; padding:8px 12px; border-radius:4px; margin-top:8px; }
+    .embed .title { font-weight:bold; color:#fff; margin-bottom:4px; }
+    .embed .description { color:#ccc; font-size:14px; }
+
+    .reactions {display:flex;gap:6px;margin-top:6px;}
+    .reaction {background:#3a3c42;border-radius:12px;padding:2px 6px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px;}
+
+    .reply-reference {
+      display: flex;
+      align-items: center;
+      font-size: 12px;
+      color: #b9bbbe;
+      opacity: 0.8;
+      margin-bottom: 4px;
+      cursor: pointer;
+      max-width: 260px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border-left: 2px solid transparent;
+      padding-left: 4px;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .reply-reference:hover {
+      background: rgba(88, 101, 242, 0.15);
+      border-left: 2px solid #5865f2;
+      border-radius: 3px;
+    }
+    .reply-reference img {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      margin-right: 4px;
+    }
+    .reply-reference .arrow {
+      margin-right: 4px;
+      color: #b9bbbe;
+    }
+
+    .highlight {
+      background-color: #ffc50012 !important;
+      transition: background-color 1.5s ease;
+    }
+
+    .roles-inline {
+      margin-left: 6px;
+      font-size: 12px;
+      display: inline-flex;
+      gap: 4px;
+    }
+    .role-badge {
+      background: #2f3136;
+      border-radius: 12px;
+      padding: 2px 6px;
+      font-size: 11px;
+      color: #ddd;
+    }
+    .userid {
+      font-size: 12px;
+      color: #999;
+      margin-left: 6px;
+    }
+    .message-text {
+      margin-top: 4px;
+      line-height: 1.375;
+    }
+    .attachments img, .attachments video {
+      margin-top: 6px;
+      border-radius: 4px;
+      max-width: 400px;
+      display: block;
+    }
+    .attachment-file {
+      color: #43b581;
+      text-decoration: none;
+    }
+    
+    /* —— Mentions —————————————————————————————— */
+    .mention{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:0 6px; height:20px; line-height:20px;
+      border-radius:3px; font-weight:700; font-size:12px;
+      background: rgba(88,101,242,.25);
+      color:#c7d0ff; border:1px solid rgba(88,101,242,.45);
+      cursor:pointer; text-decoration:none; vertical-align:baseline;
+      transition: background .15s ease, box-shadow .15s ease, border-color .15s ease;
+    }
+    .mention:hover{ background:rgba(88,101,242,.35); }
+    .mention:focus-visible{
+      outline:2px solid #fff; outline-offset:1px;
+      box-shadow:0 0 0 2px rgba(88,101,242,.6) inset;
+    }
+    .mention.me{ background:rgba(35,165,90,.25); border-color:rgba(35,165,90,.45); color:#d5ffe2; }
+    .mention.role{ background:rgba(250,166,26,.22); border-color:rgba(250,166,26,.45); color:#ffe4b3; }
+
+    .message.has-mention{
+      background:#ffc50012; border-left:3px solid rgba(255,197,0,.5);
+      border-radius:4px; padding-left:8px;
+    }
+
+    .mention[data-user]{ position:relative; }
+    .mention[data-user]:hover::after{
+      content: attr(data-user);
+      position:absolute; left:0; bottom:120%;
+      background:#111; color:#fff; padding:4px 6px; border-radius:4px;
+      font-size:11px; white-space:nowrap; transform:translateX(-10%);
+      border:1px solid #3e4147;
+    }
+    
+    .profile-popout {
+      position:fixed;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      background:#232428;
+      border-radius:8px;
+      width:340px;
+      overflow:hidden;
+      box-shadow:0 0 20px rgba(0,0,0,0.6);
+      display:none;
+      z-index:200;
+      color:#fff;
+      animation:fadeIn .2s ease;
+      max-height:90vh;
+      overflow-y:auto;
+    }
+    @keyframes fadeIn {from{opacity:0;transform:translate(-50%,-45%);}to{opacity:1;transform:translate(-50%,-50%);}}
+    .profile-header {position:relative;height:120px;background:#111;}
+    .profile-banner {width:100%;height:100%;object-fit:cover;}
+    .profile-avatar {position:absolute;bottom:-30px;left:16px;width:80px;height:80px;border-radius:50%;border:4px solid #232428;}
+    .profile-body {padding:48px 16px 16px;}
+    .profile-body h3 {margin:0;font-size:18px}
+    .profile-body .tag {font-size:14px;color:#aaa}
+    .profile-body .userid {font-size:12px;color:#888}
+    .profile-bio {margin:12px 0;font-size:14px;color:#ddd}
+    .roles {display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+    .role {background:#2f3136;border-radius:12px;padding:2px 8px;font-size:12px}
+    .close-popout {position:absolute;top:8px;right:12px;cursor:pointer;color:#aaa;font-size:18px;font-weight:bold;transition:color 0.2s;}
+    .close-popout:hover {color:#fff;}
+    .close-btn {display:block;width:100%;background:#ed4245;color:#fff;padding:10px;border:none;cursor:pointer;font-weight:bold;text-align:center;transition:background 0.2s;}
+    .close-btn:hover {background:#c73333;}
+    
+    /* Overlay para fechar ao clicar fora */
+    .profile-overlay {
+      position:fixed;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background:rgba(0,0,0,0.5);
+      z-index:199;
+      display:none;
+    }
+
+    /* —— Barra de Rolagem Personalizada Discord Style ——————————— */
+    /* Webkit browsers (Chrome, Safari, Edge) */
+    ::-webkit-scrollbar {
+      width: 14px;
+      height: 14px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #2b2d31;
+      border-radius: 8px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #1e1f22;
+      border: 3px solid #2b2d31;
+      border-radius: 8px;
+      transition: background-color 0.2s ease;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #484c58;
+    }
+
+    ::-webkit-scrollbar-thumb:active {
+      background: #6b7280;
+    }
+
+    ::-webkit-scrollbar-corner {
+      background: #2b2d31;
+    }
+
+    /* Firefox */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: #1e1f22 #2b2d31;
+    }
+
+    /* Barra específica para área de mensagens */
+    .messages::-webkit-scrollbar {
+      width: 16px;
+    }
+
+    .messages::-webkit-scrollbar-track {
+      background: transparent;
+      border-radius: 8px;
+      margin: 4px;
+    }
+
+    .messages::-webkit-scrollbar-thumb {
+      background: rgba(30, 31, 34, 0.8);
+      border: 4px solid transparent;
+      background-clip: padding-box;
+      border-radius: 8px;
+      transition: background-color 0.2s ease;
+    }
+
+    .messages::-webkit-scrollbar-thumb:hover {
+      background: rgba(72, 76, 88, 0.9);
+      background-clip: padding-box;
+    }
+
+    .messages::-webkit-scrollbar-thumb:active {
+      background: rgba(107, 114, 128, 1);
+      background-clip: padding-box;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <!-- Header com título do canal -->
+    <div class="channel-header">
+      <div class="channel-title">
+        <svg width="20" height="20" fill="#fff" viewBox="0 0 24 24"><path d="M16 4h.5v-.5a2.5 2.5 0 0 1 5 0V4h.5a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Zm4-.5V4h-2v-.5a1 1 0 1 1 2 0Z" clip-rule="evenodd"></path><path d="M12.5 8c.28 0 .5.22.5.5V9c0 .1 0 .2.02.31.03.34-.21.69-.56.69H9.85l-.67 4h4.97l.28-1.68c.06-.34.44-.52.77-.43a3 3 0 0 0 .8.11c.27 0 .47.24.43.5l-.25 1.5H20a1 1 0 1 1 0 2h-4.15l-.86 5.16a1 1 0 0 1-1.98-.32l.8-4.84H8.86l-.86 5.16A1 1 0 0 1 6 20.84L6.82 16H3a1 1 0 1 1 0-2h4.15l.67-4H4a1 1 0 1 1 0-2h4.15l.86-5.16a1 1 0 1 1 1.98.32L10.19 8h2.31Z"></path></svg>
+        <h1>#ticket-akumarugal</h1>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Pesquisar mensagens..." autocomplete="off">
+        <div class="search-results" id="searchResults"></div>
+      </div>
+    </div>
+
+    <!-- Mensagens -->
+    <div class="messages">
+      <!-- Mensagem de boas-vindas -->
+      <div class="welcome-message">
+        <svg width="42" height="42" fill="#fff" viewBox="0 0 24 24"><path d="M16 4h.5v-.5a2.5 2.5 0 0 1 5 0V4h.5a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Zm4-.5V4h-2v-.5a1 1 0 1 1 2 0Z" clip-rule="evenodd"></path><path d="M12.5 8c.28 0 .5.22.5.5V9c0 .1 0 .2.02.31.03.34-.21.69-.56.69H9.85l-.67 4h4.97l.28-1.68c.06-.34.44-.52.77-.43a3 3 0 0 0 .8.11c.27 0 .47.24.43.5l-.25 1.5H20a1 1 0 1 1 0 2h-4.15l-.86 5.16a1 1 0 0 1-1.98-.32l.8-4.84H8.86l-.86 5.16A1 1 0 0 1 6 20.84L6.82 16H3a1 1 0 1 1 0-2h4.15l.67-4H4a1 1 0 1 1 0-2h4.15l.86-5.16a1 1 0 1 1 1.98.32L10.19 8h2.31Z"></path></svg>
+        <h3>Bem-vindo(a) a #ticket-akumarugal!</h3>
+        <p>Este é o backup completo do ticket.<br>
+        Servidor: <strong>Hubgin Tecnologias</strong></p>
+      </div>
+
+      <!-- Divider com data -->
+      <div class="divider"><span>23 de agosto de 2025</span></div>
+
+      
+        <div class="message hidden" id="msg-1408980299161014334">
+          <img class="avatar" src="https://cdn.discordapp.com/avatars/1408931072858918942/f4622556b3eadcbe50b6d3cb06e0ad89.png?size=128" alt="Hubgin" data-user-id="1408931072858918942" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiM3Mjg5ZGEiLz4KPHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPC9zdmc+Cjwvc3ZnPgo='">
+          <div>
+            <span class="username">Hubgin#8106</span>
+            <span class="roles-inline"><span class="role-badge" style="background-color: #5865f2;">Hubgin</span></span>
+            <span class="userid">ID: 1408931072858918942</span>
+            <span class="timestamp">23/08/2025, 22:04:40</span>
+            
+            
+            <div class="embed" style="border-left-color: #22c55e;"><div class="title">🎫 Ticket Em Atendimento - ticket-akumarugal</div><div class="description">✅ Ticket criado por: <@470316194734407700>
+👥 Envolvidos: Assumido por <@470316194734407700> e criado por <@470316194734407700>
+Seu atendimento está em andamento!</div><div class="footer">Sistema de Tickets | Evotechlab</div></div>
+            <div class="buttons"><button class="btn red"> Cancelar Atendimento</button></div>
+            
+          </div>
+        </div>
+        <div class="message hidden" id="msg-1408980342613999741">
+          <img class="avatar" src="https://cdn.discordapp.com/avatars/1408931072858918942/f4622556b3eadcbe50b6d3cb06e0ad89.png?size=128" alt="Hubgin" data-user-id="1408931072858918942" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiM3Mjg5ZGEiLz4KPHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPC9zdmc+Cjwvc3ZnPgo='">
+          <div>
+            <span class="username">Hubgin#8106</span>
+            <span class="roles-inline"><span class="role-badge" style="background-color: #5865f2;">Hubgin</span></span>
+            <span class="userid">ID: 1408931072858918942</span>
+            <span class="timestamp">23/08/2025, 22:04:51</span>
+            
+            
+            <div class="embed" style="border-left-color: #ffa500;"><div class="title">⭐ Avaliação do Atendimento</div><div class="description">Seu problema foi resolvido? Clique em uma nota abaixo (1 a 5).</div><div class="footer">Sistema de Tickets | Evotechlab</div></div>
+            <div class="buttons"><button class="btn red"> 1</button><button class="btn red"> 2</button><button class="btn red"> 3</button><button class="btn green"> 4</button><button class="btn green"> 5</button></div>
+            
+          </div>
+        </div>
+
+    </div>
+  </div>
+
+  <!-- Modal de Perfil -->
+  <div class="profile-overlay" id="profileOverlay"></div>
+  <div class="profile-popout" id="profilePopout">
+    <span class="close-popout" onclick="closeProfile()">✖</span>
+    <div class="profile-header">
+      <img class="profile-banner" src="https://via.placeholder.com/340x120/36393f/36393f" alt="banner" id="profileBanner">
+      <img class="profile-avatar" id="profileAvatar" src="">
+    </div>
+    <div class="profile-body">
+      <h3 id="profileName">Nome do Usuário</h3>
+      <p class="tag" id="profileTag">@usuario#0000</p>
+      <p class="userid" id="profileId">ID: 000000000000000000</p>
+      <div class="profile-bio" id="profileBio">Informações do usuário</div>
+      <div class="roles" id="profileRoles"></div>
+    </div>
+    <button class="close-btn" onclick="closeProfile()">Fechar Perfil</button>
+  </div>
+
+  <!-- MENTIONS: processamento de menções -->
+  <script>
+  // Dados dos usuários para o sistema de perfil
+  const usersData = {
+    
+  };
+
+  function openProfile(userId) {
+    const user = usersData[userId];
+    if (!user) return;
+
+    const profilePopout = document.getElementById('profilePopout');
+    const profileOverlay = document.getElementById('profileOverlay');
+    const profileAvatar = document.getElementById('profileAvatar');
+    const profileName = document.getElementById('profileName');
+    const profileTag = document.getElementById('profileTag');
+    const profileId = document.getElementById('profileId');
+    const profileBio = document.getElementById('profileBio');
+    const profileRoles = document.getElementById('profileRoles');
+
+    // Preencher dados do perfil
+    profileAvatar.src = user.avatar;
+    profileName.textContent = user.name;
+    profileTag.textContent = user.tag;
+    profileId.textContent = "ID: " + user.id;
+    profileBio.textContent = user.bio || "Sem informações adicionais.";
+    
+    // Limpar e adicionar roles
+    profileRoles.innerHTML = "";
+    if (user.roles && user.roles.length > 0) {
+      user.roles.forEach(role => {
+        const span = document.createElement("span");
+        span.className = "role";
+        span.textContent = role.name;
+        span.style.backgroundColor = role.color;
+        span.style.color = "#fff";
+        profileRoles.appendChild(span);
+      });
+    } else {
+      profileRoles.innerHTML = '<span class="role">Sem roles especiais</span>';
+    }
+
+    // Mostrar modal e overlay
+    profileOverlay.style.display = 'block';
+    profilePopout.style.display = 'block';
+    
+    // Focar no modal para acessibilidade
+    profilePopout.focus();
+  }
+
+  function closeProfile() {
+    const profilePopout = document.getElementById('profilePopout');
+    const profileOverlay = document.getElementById('profileOverlay');
+    profilePopout.style.display = 'none';
+    profileOverlay.style.display = 'none';
+  }
+
+  // Adicionar evento de clique nos avatares
+  document.addEventListener('DOMContentLoaded', function() {
+    const avatars = document.querySelectorAll('.avatar');
+    avatars.forEach(avatar => {
+      avatar.addEventListener('click', function() {
+        const userId = this.getAttribute('data-user-id');
+        if (userId) {
+          openProfile(userId);
+        }
+      });
+    });
+
+    // Fechar modal ao clicar no overlay
+    const profileOverlay = document.getElementById('profileOverlay');
+    profileOverlay.addEventListener('click', closeProfile);
+
+    // Destacar mensagens que contêm menções
+    const messages = document.querySelectorAll('.message');
+    messages.forEach(message => {
+      const mentions = message.querySelectorAll('.mention');
+      if (mentions.length > 0) {
+        message.classList.add('has-mention');
+      }
+    });
+
+    // Funcionalidade de hover para mostrar ID
+    document.addEventListener('click', e => {
+      const mention = e.target.closest('.mention');
+      if (mention && mention.hasAttribute('data-user-id')) {
+        mention.setAttribute('tabindex', '-1');
+        mention.focus();
+      }
+    });
+
+    // —————————————————————————————————————————————————————————————————————————
+    // FUNCIONALIDADE DE PESQUISA
+    // —————————————————————————————————————————————————————————————————————————
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+    const messagesContainer = document.querySelector('.messages');
+    let searchTimeout;
+
+    // Função para limpar destaques anteriores
+    function clearHighlights() {
+      const highlighted = document.querySelectorAll('.search-highlight');
+      highlighted.forEach(element => {
+        const parent = element.parentNode;
+        parent.replaceChild(document.createTextNode(element.textContent), element);
+        parent.normalize();
+      });
+    }
+
+    // Função para destacar texto encontrado
+    function highlightText(element, searchTerm) {
+      if (!searchTerm || searchTerm.length < 2) return;
+      
+      const walker = document.createTreeWalker(
+        element,
+        NodeFilter.SHOW_TEXT,
+        null,
+        false
+      );
+      
+      const textNodes = [];
+      let node;
+      while (node = walker.nextNode()) {
+        textNodes.push(node);
+      }
+      
+      textNodes.forEach(textNode => {
+        const text = textNode.textContent;
+        const regex = new RegExp(searchTerm, 'gi');
+        if (regex.test(text)) {
+          const highlightedText = text.replace(regex, '<span class="search-highlight">$&</span>');
+          const wrapper = document.createElement('div');
+          wrapper.innerHTML = highlightedText;
+          
+          // Substituir o nó de texto pelos novos elementos
+          const fragment = document.createDocumentFragment();
+          while (wrapper.firstChild) {
+            fragment.appendChild(wrapper.firstChild);
+          }
+          textNode.parentNode.replaceChild(fragment, textNode);
+        }
+      });
+    }
+
+    // Função para pesquisar mensagens
+    function searchMessages(searchTerm) {
+      clearHighlights();
+      searchResults.innerHTML = '';
+      searchResults.style.display = 'none';
+
+      if (!searchTerm || searchTerm.length < 2) {
+        return;
+      }
+
+      const allMessages = messagesContainer.querySelectorAll('.message');
+      const results = [];
+
+      allMessages.forEach((message, index) => {
+        const messageText = message.textContent.toLowerCase();
+        const username = message.querySelector('.username')?.textContent || 'Usuário';
+        
+        if (messageText.includes(searchTerm.toLowerCase())) {
+          results.push({
+            element: message,
+            index: index,
+            username: username,
+            preview: messageText.substring(0, 80) + (messageText.length > 80 ? '...' : '')
+          });
+          
+          // Destacar o texto encontrado
+          highlightText(message, searchTerm);
+        }
+      });
+
+      // Mostrar resultados
+      if (results.length > 0) {
+        searchResults.style.display = 'block';
+        
+        results.slice(0, 10).forEach(result => { // Máximo 10 resultados
+          const resultItem = document.createElement('div');
+          resultItem.className = 'search-result-item';
+          resultItem.innerHTML = `
+            <div style="font-weight: bold; color: #fff; margin-bottom: 2px;">${result.username}</div>
+            <div style="color: #ccc; font-size: 12px;">${result.preview}</div>
+          `;
+          
+          resultItem.addEventListener('click', () => {
+            result.element.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            });
+            result.element.style.backgroundColor = 'rgba(255, 197, 0, 0.2)';
+            setTimeout(() => {
+              result.element.style.backgroundColor = '';
+            }, 2000);
+            searchResults.style.display = 'none';
+          });
+          
+          searchResults.appendChild(resultItem);
+        });
+
+        // Mostrar contador de resultados
+        if (results.length > 10) {
+          const moreResults = document.createElement('div');
+          moreResults.className = 'search-result-item';
+          moreResults.style.textAlign = 'center';
+          moreResults.style.color = '#87898c';
+          moreResults.innerHTML = `+${results.length - 10} mais resultados`;
+          searchResults.appendChild(moreResults);
+        }
+      }
+    }
+
+    // Event listeners para pesquisa
+    searchInput.addEventListener('input', function(e) {
+      const searchTerm = e.target.value.trim();
+      
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        searchMessages(searchTerm);
+      }, 300); // Debounce de 300ms
+    });
+
+    // Fechar resultados ao clicar fora
+    document.addEventListener('click', function(e) {
+      if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+        searchResults.style.display = 'none';
+      }
+    });
+
+    // Navegação com teclado
+    searchInput.addEventListener('keydown', function(e) {
+      const items = searchResults.querySelectorAll('.search-result-item');
+      const activeItem = searchResults.querySelector('.search-result-item.active');
+      
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (activeItem) {
+          activeItem.classList.remove('active');
+          const next = activeItem.nextElementSibling;
+          if (next && next.classList.contains('search-result-item')) {
+            next.classList.add('active');
+          } else if (items.length > 0) {
+            items[0].classList.add('active');
+          }
+        } else if (items.length > 0) {
+          items[0].classList.add('active');
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (activeItem) {
+          activeItem.classList.remove('active');
+          const prev = activeItem.previousElementSibling;
+          if (prev && prev.classList.contains('search-result-item')) {
+            prev.classList.add('active');
+          } else if (items.length > 0) {
+            items[items.length - 1].classList.add('active');
+          }
+        } else if (items.length > 0) {
+          items[items.length - 1].classList.add('active');
+        }
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (activeItem) {
+          activeItem.click();
+        }
+      } else if (e.key === 'Escape') {
+        searchResults.style.display = 'none';
+        searchInput.blur();
+      }
+    });
+  });
+
+  // Fechar modal com ESC
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeProfile();
+    }
+  });
+  </script>
+</body>
+</html>
